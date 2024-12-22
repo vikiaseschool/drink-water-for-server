@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            background-image: url('/static/bg_dash.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-container label {
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .form-container input,
+        .form-container select,
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .logout-button {
+            background-color: #f44336;
+            color: white;
+            cursor: pointer;
+            border: none;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        .logout-button:hover {
+            background-color: #e53935;
+        }
+
+        .chart-container {
+            display: inline-block;
+            text-align: center;
+            margin: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        canvas {
+            width: 300px !important;
+            height: 300px !important;
+        }
+
+        .total-text {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .chart-wrapper {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .chart-wrapper > .chart-container {
+            margin-right: 30px;
+        }
+
+        .chartjs-legend {
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dashboard - {{ session['username'] }}</h1>
+
+    <div class="form-container">
+        <form method="POST">
+            <label for="category">Category:</label>
+            <select name="category" id="category">
+                <option value="Water">Water</option>
+                <option value="Soda">Soda</option>
+                <option value="Alcoholic beverages">Alcoholic beverages</option>
+                <option value="Caffeinated beverages">Caffeinated beverages</option>
+            </select>
+            <label for="amount">Amount (ml):</label>
+            <input type="number" name="amount" id="amount" step="10" required>
+            <button type="submit">Add record</button>
+        </form>
+        <p class="info-text">For adding, write for example 500, for deleting write -500.</p>
+    </div>
+
+    <form action="/logout" method="POST">
+        <button type="submit" class="logout-button">Logout</button>
+    </form>
+
+    <hr>
+
+    <div class="chart-wrapper">
+        <div class="chart-container">
+            <h3>Daily data</h3>
+            <canvas id="dailyChart"></canvas>
+            <p id="dailyTotal" class="total-text"></p>
+        </div>
+
+        <div class="chart-container">
+            <h3>Weekly data</h3>
+            <canvas id="weeklyChart"></canvas>
+            <p id="weeklyTotal" class="total-text"></p>
+        </div>
+
+        <div class="chart-container">
+            <h3>Monthly data</h3>
+            <canvas id="monthlyChart"></canvas>
+            <p id="monthlyTotal" class="total-text"></p>
+        </div>
+
+        <div class="chart-container">
+            <h3>Yearly data</h3>
+            <canvas id="yearlyChart"></canvas>
+            <p id="yearlyTotal" class="total-text"></p>
+        </div>
+    </div>
+
+    <script>
+        function createChart(chartId, totalId, data, isLiters = false) {
+            const ctx = document.getElementById(chartId).getContext('2d');
+
+            if (Array.isArray(data) && data.length > 0) {
+                const categoryOrder = ['Alcoholic beverages', 'Water', 'Soda', 'Caffeinated beverages'];
+                const sortedData = categoryOrder.map(category => {
+                    const entry = data.find(item => item[0] === category);
+                    return entry ? entry[1] : 0;
+                });
+
+                const chartData = {
+                    labels: categoryOrder,
+                    datasets: [{
+                        data: sortedData,
+                        backgroundColor: ['#FF5733', '#3399FF', '#33FF57', '#8B4513'],
+                    }]
+                };
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: chartData,
+                    options: {
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#fff'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const total = sortedData.reduce((sum, amount) => sum + amount, 0);
+                const totalInLiters = isLiters ? (total / 1000).toFixed(2) : total;
+                const unit = isLiters ? 'L' : 'ml';
+                document.getElementById(totalId).innerText = `Total amount: ${totalInLiters} ${unit}`;
+            } else {
+                console.error("Invalid data for chart: ", data);
+            }
+        }
+
+        createChart('dailyChart', 'dailyTotal', {{ daily_data | tojson | safe }});
+        createChart('weeklyChart', 'weeklyTotal', {{ weekly_data | tojson | safe }}, true);
+        createChart('monthlyChart', 'monthlyTotal', {{ monthly_data | tojson | safe }}, true);
+        createChart('yearlyChart', 'yearlyTotal', {{ yearly_data | tojson | safe }}, true);
+    </script>
+</body>
+</html>
