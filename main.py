@@ -1,12 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 from datetime import date
+import os 
 
 app = Flask(__name__)
 app.secret_key = 'axdsd'
 
 def get_db_connection():
-    conn = sqlite3.connect("drink-water-for-server/drink_diary.db")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(BASE_DIR, "drink-water-for-server", "drink_diary.db")
+    conn = sqlite3.connectdb_path)
+    
     conn.row_factory = sqlite3.Row
     return conn
 
