@@ -9,6 +9,9 @@ app.secret_key = 'axdsd'
 def get_db_connection():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, "drink-water-for-server", "drink_diary.db")
+
+    print(f"Trying to connect to database at: {db_path}")  # Přidejte tento výpis pro ladění
+
     conn = sqlite3.connect(db_path)
     
     conn.row_factory = sqlite3.Row
