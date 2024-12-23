@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = 'axdsd'
 
 def get_db_connection():
-    conn = sqlite3.connect("drink_diary.db")
+    conn = sqlite3.connect("drink-water-for-server/drink_diary.db")
     conn.row_factory = sqlite3.Row
     return conn
 
